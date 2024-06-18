@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MNIST Dataset Classify</title>
+    <style>
+        .container {
+            display: grid;
+            grid-template-columns: repeat(28, 10px);
+            grid-template-rows: repeat(28, 10px);
+            gap: 1px;
+            margin-bottom: 20px;
+        }
+        
+        .pixel {
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border: 1px solid #ddd;
+        }
+        
+        .pixel.active {
+            background-color: black;
+        }
+        
+        .button-container {
+            text-align: center;
+        }
+        
+        .chart-container {
+            width: 80%;
+            height: 300px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            border: 1px solid #ddd;
+            padding: 50px;
+        }
+        
+        .bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .bar {
+            width: 30px;
+            background-color: steelblue;
+            text-align: center;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" id="pixel-container"></div>
+    <div class="button-container">
+        <button id="save-button">Submit</button>
+    </div>
+    <div class="chart-container" id="chart-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script>
+        const container = document.getElementById('pixel-container');
+        const saveButton = document.getElementById('save-button');
+
+        for (let i = 0; i < 784; i++) {
+            const pixel = document.createElement('div');
+            pixel.classList.add('pixel');
+            pixel.addEventListener('click', () => {
+                pixel.classList.toggle('active');
+            });
+            container.appendChild(pixel);
+        }
+
+        var pixelArray = [];
+
+        saveButton.addEventListener('click', async() => {
+            pixelArray = []
+
+            const pixels = document.querySelectorAll('.pixel');
+            for (let row = 0; row < 28; row++) {
+                for (let col = 0; col < 28; col++) {
+                    const index = row * 28 + col;
+                    const pixel = pixels[index];
+                    if (pixel.classList.contains('active')) {
+                        pixelArray.push(255);
+                    } else {
+                        pixelArray.push(0);
+                    }
+                }
+            }
+            console.log(pixelArray);
+
+            const model = await tf.loadLayersModel('./model/model.json');
+            const input = tf.tensor(pixelArray).reshape([1, 28, 28]);
+
+            const prediction = model.predict(input);
+            const logits = prediction.dataSync();
+            const probabilities = tf.softmax(logits).dataSync();
+
+            label = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+            const chartContainer = document.getElementById('chart-container');
+            chartContainer.innerHTML = "";
+
+            probabilities.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.classList.add('bar');
+                bar.style.height = `${value * 100}%`;
+                bar.textContent = `${value * 100}%`;
+
+                chartContainer.appendChild(bar);
+            });
+        });
+    </script>
+</body>
+
+</html>
